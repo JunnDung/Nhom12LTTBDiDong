@@ -1,4 +1,5 @@
 https://www.figma.com/design/JN0qfdtBa8DQmStykPkG8H/LTTBDiDong?node-id=0-1&t=qQc75snd89oMeB0f-1
+
 Đồ Án Ứng Dụng Nhắc Nhở Và Theo Dõi Uống Nước HydroAI (Tích Hợp AI)
 1. Giới thiệu
 HydroAI là một ứng dụng nhắc nhở và theo dõi uống nước thông minh, được phát triển bằng Kotlin trên nền tảng Android. Ứng dụng không chỉ giúp người dùng duy trì thói quen uống nước lành mạnh mà còn tích hợp AI chatbot để tư vấn lượng nước cần uống, điều chỉnh nhắc nhở dựa trên thói quen cá nhân và tạo động lực uống nước mỗi ngày.
