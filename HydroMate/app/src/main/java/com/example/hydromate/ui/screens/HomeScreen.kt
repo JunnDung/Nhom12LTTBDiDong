@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -15,12 +16,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,6 +38,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -41,6 +50,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,18 +59,34 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hydromate.R
 import com.example.hydromate.model.UserWaterGoal
+import com.example.hydromate.model.WaterIntakeEntry
 import com.example.hydromate.ui.theme.HydroMateTheme
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun HomeScreen(
     userWaterGoal: UserWaterGoal,
     onSettingsClick: () -> Unit = {},
-    onStatsClick: () -> Unit = {},
-    onAddWaterClick: () -> Unit = {}
+    onStatsClick: () -> Unit = {}
 ) {
+    // Lưu trữ danh sách các lần uống nước trong state
+    var waterIntakeEntries by remember { mutableStateOf(listOf<WaterIntakeEntry>()) }
+    
+    // Lấy mục tiêu từ userWaterGoal
     val waterGoal = userWaterGoal.dailyWaterGoal
-    var currentWaterIntake by remember { mutableIntStateOf(0) }
-    val progress = if (waterGoal > 0) currentWaterIntake.toFloat() / waterGoal.toFloat() else 0f
+    
+    // Tính tổng lượng nước đã uống
+    val currentWaterIntake = waterIntakeEntries.sumOf { it.amount }
+    
+    // Dialog thêm nước
+    var showAddWaterDialog by remember { mutableStateOf(false) }
+    
+    // Tính toán tiến trình
+    val progress = if (waterGoal > 0) {
+        (currentWaterIntake.toFloat() / waterGoal.toFloat()).coerceAtMost(1.0f)
+    } else {
+        0f
+    }
     
     // Màu chính của ứng dụng
     val primaryBlue = Color(0xFF00B2FF)
@@ -125,11 +151,11 @@ fun HomeScreen(
                         .background(Color.White),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "••",
-                        color = Color.Gray,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                    Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.ic_water_drop),
+                        contentDescription = "Biểu tượng nước",
+                        tint = primaryBlue,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
                 
@@ -273,21 +299,41 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.width(98.dp))
             }
             
-            // Khoảng trống để đẩy nội dung xuống
-            Spacer(modifier = Modifier.weight(1f))
-            
-            // Thông báo ở giữa màn hình
-            Text(
-                text = "Sau khi uống một cốc nước\nnhấp vào nút \"+\" để ghi lại",
-                textAlign = TextAlign.Center,
-                color = Color(0xFF57CAFF),
-                fontSize = 18.sp,
-                lineHeight = 28.sp,
-                modifier = Modifier.padding(horizontal = 32.dp)
-            )
-            
-            // Khoảng trống để đẩy nút lên
-            Spacer(modifier = Modifier.weight(1f))
+            // Hiển thị danh sách các lần uống nước
+            if (waterIntakeEntries.isNotEmpty()) {
+                // Khoảng trống để đẩy nội dung xuống
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Hiển thị danh sách các lần uống nước dạng lưới
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
+                    contentPadding = PaddingValues(vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    content = {
+                        items(waterIntakeEntries) { entry ->
+                            WaterIntakeItem(entry)
+                        }
+                    }
+                )
+            } else {
+                // Thông báo ở giữa màn hình
+                Text(
+                    text = "Sau khi uống một cốc nước\nnhấp vào nút \"+\" để ghi lại",
+                    textAlign = TextAlign.Center,
+                    color = Color(0xFF57CAFF),
+                    fontSize = 18.sp,
+                    lineHeight = 28.sp,
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                )
+                
+                // Khoảng trống để đẩy nút lên
+                Spacer(modifier = Modifier.weight(1f))
+            }
         }
         
         // Nút thêm nước ở dưới cùng
@@ -298,11 +344,7 @@ fun HomeScreen(
             contentAlignment = Alignment.BottomCenter
         ) {
             FloatingActionButton(
-                onClick = {
-                    // Thêm 200ml mỗi lần nhấn
-                    currentWaterIntake = (currentWaterIntake + 200).coerceAtMost(waterGoal)
-                    onAddWaterClick()
-                },
+                onClick = { showAddWaterDialog = true },
                 modifier = Modifier.size(70.dp),
                 containerColor = lightYellow,
                 contentColor = Color.DarkGray,
@@ -316,6 +358,83 @@ fun HomeScreen(
                 )
             }
         }
+
+        // Hiển thị dialog thêm nước nếu cần
+        if (showAddWaterDialog) {
+            AddWaterScreen(
+                onDismiss = { showAddWaterDialog = false },
+                onAddWater = { entry ->
+                    // Sử dụng cập nhật state để trigger recomposition
+                    waterIntakeEntries = listOf(entry) + waterIntakeEntries
+                    showAddWaterDialog = false
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun WaterIntakeItem(entry: WaterIntakeEntry) {
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    val formattedTime = entry.timestamp.format(timeFormatter)
+    
+    // Thiết kế nhỏ gọn hơn để hiển thị 4 item/hàng
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(80.dp)
+            .padding(horizontal = 4.dp, vertical = 8.dp)
+    ) {
+        // Biểu tượng nước dựa vào lượng
+        if (entry.amount == 300) {
+            Icon(
+                painter = painterResource(id = R.drawable.nuoc300ml),
+                contentDescription = "Ly nước 300ml",
+                tint = Color(0xFF57CAFF),
+                modifier = Modifier.size(50.dp)
+            )
+            Text(
+                text = "300 ml",
+                color = Color.Gray,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+        } else if (entry.amount == 700) {
+            Icon(
+                painter = painterResource(id = R.drawable.nuoc700ml),
+                contentDescription = "Chai nước 700ml",
+                tint = Color(0xFF57CAFF),
+                modifier = Modifier.size(50.dp)
+            )
+            Text(
+                text = "700 ml",
+                color = Color.Gray,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+        } else {
+            // Đối với các lượng nước khác, vẫn sử dụng ly nước
+            Icon(
+                painter = painterResource(id = R.drawable.nuoc300ml),
+                contentDescription = "Lượng nước tùy chỉnh",
+                tint = Color(0xFF57CAFF),
+                modifier = Modifier.size(50.dp)
+            )
+            Text(
+                text = "${entry.amount} ml",
+                color = Color.Gray,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+        }
+        
+        // Hiển thị thời gian
+        Text(
+            text = formattedTime,
+            color = Color.Gray,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(top = 2.dp)
+        )
     }
 }
 

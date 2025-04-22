@@ -134,10 +134,6 @@ fun AppNavigation(
                 },
                 onStatsClick = {
                     // Có thể thêm điều hướng đến màn hình thống kê ở đây
-                },
-                onAddWaterClick = {
-                    // Xử lý khi người dùng thêm nước
-                    // Có thể cập nhật dữ liệu hoặc hiển thị dialog ở đây
                 }
             )
         }
