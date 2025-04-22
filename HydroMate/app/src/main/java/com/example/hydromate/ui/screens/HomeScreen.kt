@@ -33,9 +33,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -60,13 +64,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.ui.window.DialogProperties
 import com.example.hydromate.R
 import com.example.hydromate.model.UserWaterGoal
 import com.example.hydromate.model.WaterIntakeEntry
 import com.example.hydromate.ui.theme.HydroMateTheme
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.BorderStroke
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     userWaterGoal: UserWaterGoal,
@@ -80,11 +90,21 @@ fun HomeScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedEntryForDelete by remember { mutableStateOf<WaterIntakeEntry?>(null) }
     
+    // Thêm biến trạng thái cho Date Picker Dialog
+    var showDatePicker by remember { mutableStateOf(false) }
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    
     // Lấy mục tiêu từ userWaterGoal
     val waterGoal = userWaterGoal.dailyWaterGoal
     
-    // Tính tổng lượng nước đã uống
-    val currentWaterIntake = waterIntakeEntries.sumOf { it.amount }
+    // Lọc danh sách nước theo ngày được chọn
+    val filteredWaterEntries = waterIntakeEntries.filter { entry ->
+        val entryDate = entry.getTimestamp().toLocalDate()
+        entryDate.isEqual(selectedDate)
+    }
+    
+    // Tính tổng lượng nước đã uống (chỉ tính cho ngày được chọn)
+    val currentWaterIntake = filteredWaterEntries.sumOf { it.amount }
     
     // Tính toán tiến trình
     val progress = if (waterGoal > 0) {
@@ -113,6 +133,57 @@ fun HomeScreen(
     val onWaterItemClick = { entry: WaterIntakeEntry ->
         selectedEntryForDelete = entry
         showDeleteDialog = true
+    }
+    
+    // DatePicker Dialog
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDate.atStartOfDay(ZoneId.systemDefault())
+                .toInstant().toEpochMilli()
+        )
+        
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val newDate = Instant.ofEpochMilli(millis)
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                            selectedDate = newDate
+                        }
+                        showDatePicker = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = primaryBlue
+                    )
+                ) {
+                    Text("Đồng ý")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showDatePicker = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Gray
+                    )
+                ) {
+                    Text("Hủy")
+                }
+            }
+        ) {
+            DatePicker(
+                state = datePickerState,
+                title = {
+                    Text(
+                        text = "Chọn ngày",
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                }
+            )
+        }
     }
     
     Box(
@@ -288,9 +359,17 @@ fun HomeScreen(
                         .clip(RoundedCornerShape(16.dp))
                         .background(transparentWhite)
                         .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .clickable { showDatePicker = true }
                 ) {
+                    // Hiển thị "Hôm nay" nếu là ngày hiện tại, ngược lại hiển thị ngày được chọn
+                    val displayText = if (selectedDate.isEqual(LocalDate.now())) {
+                        "Hôm nay"
+                    } else {
+                        selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                    }
+                    
                     Text(
-                        text = "Hôm nay",
+                        text = displayText,
                         color = Color.White,
                         fontWeight = FontWeight.Medium,
                         fontSize = 16.sp
@@ -309,7 +388,7 @@ fun HomeScreen(
             }
             
             // Hiển thị danh sách các lần uống nước
-            if (waterIntakeEntries.isNotEmpty()) {
+            if (filteredWaterEntries.isNotEmpty()) {
                 // Khoảng trống để đẩy nội dung xuống
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -323,7 +402,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(waterIntakeEntries) { entry ->
+                    items(filteredWaterEntries) { entry ->
                         val formattedTime = entry.getTimestamp().format(DateTimeFormatter.ofPattern("HH:mm"))
                         
                         WaterIntakeItem(
@@ -335,14 +414,26 @@ fun HomeScreen(
                 }
             } else {
                 // Thông báo ở giữa màn hình
-                Text(
-                    text = "Sau khi uống một cốc nước\nnhấp vào nút \"+\" để ghi lại",
-                    textAlign = TextAlign.Center,
-                    color = Color(0xFF57CAFF),
-                    fontSize = 18.sp,
-                    lineHeight = 28.sp,
-                    modifier = Modifier.padding(horizontal = 32.dp)
-                )
+                // Hiển thị thông báo khác nhau cho ngày hiện tại và ngày trong quá khứ
+                if (selectedDate.isEqual(LocalDate.now())) {
+                    Text(
+                        text = "Sau khi uống một cốc nước\nnhấp vào nút \"+\" để ghi lại",
+                        textAlign = TextAlign.Center,
+                        color = Color(0xFF57CAFF),
+                        fontSize = 18.sp,
+                        lineHeight = 28.sp,
+                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 32.dp)
+                    )
+                } else {
+                    Text(
+                        text = "Không có dữ liệu uống nước\ncho ngày ${selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}",
+                        textAlign = TextAlign.Center,
+                        color = Color(0xFF57CAFF),
+                        fontSize = 18.sp,
+                        lineHeight = 28.sp,
+                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 32.dp)
+                    )
+                }
                 
                 // Khoảng trống để đẩy nút lên
                 Spacer(modifier = Modifier.weight(1f))
