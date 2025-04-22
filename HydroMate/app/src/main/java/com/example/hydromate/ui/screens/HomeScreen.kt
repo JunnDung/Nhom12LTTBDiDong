@@ -31,6 +31,8 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,6 +59,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.hydromate.R
 import com.example.hydromate.model.UserWaterGoal
 import com.example.hydromate.model.WaterIntakeEntry
@@ -71,6 +74,10 @@ fun HomeScreen(
 ) {
     // Lưu trữ danh sách các lần uống nước trong state
     var waterIntakeEntries by remember { mutableStateOf(listOf<WaterIntakeEntry>()) }
+    
+    // Lưu trữ thông tin và trạng thái dialog xóa
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var selectedEntryForDelete by remember { mutableStateOf<WaterIntakeEntry?>(null) }
     
     // Lấy mục tiêu từ userWaterGoal
     val waterGoal = userWaterGoal.dailyWaterGoal
@@ -93,6 +100,21 @@ fun HomeScreen(
     val lightYellow = Color(0xFFFFE600)
     val transparentWhite = Color(0x33FFFFFF)
     val orangeIndicator = Color(0xFFFF6D33)
+    
+    // Hàm xử lý xóa nước
+    val handleDeleteConfirmation = {
+        selectedEntryForDelete?.let { entry ->
+            waterIntakeEntries = waterIntakeEntries.filter { it.id != entry.id }
+        }
+        showDeleteDialog = false
+        selectedEntryForDelete = null
+    }
+    
+    // Hàm xử lý khi người dùng bấm vào một mục nước
+    val onWaterItemClick = { entry: WaterIntakeEntry ->
+        selectedEntryForDelete = entry
+        showDeleteDialog = true
+    }
     
     Box(
         modifier = Modifier.fillMaxSize()
@@ -316,7 +338,10 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     content = {
                         items(waterIntakeEntries) { entry ->
-                            WaterIntakeItem(entry)
+                            WaterIntakeItem(
+                                entry = entry,
+                                onClick = { onWaterItemClick(entry) }
+                            )
                         }
                     }
                 )
@@ -370,11 +395,26 @@ fun HomeScreen(
                 }
             )
         }
+        
+        // Hiển thị dialog xác nhận xóa nếu cần
+        if (showDeleteDialog) {
+            DeleteConfirmationDialog(
+                entry = selectedEntryForDelete,
+                onConfirm = handleDeleteConfirmation,
+                onDismiss = { 
+                    showDeleteDialog = false
+                    selectedEntryForDelete = null
+                }
+            )
+        }
     }
 }
 
 @Composable
-fun WaterIntakeItem(entry: WaterIntakeEntry) {
+fun WaterIntakeItem(
+    entry: WaterIntakeEntry,
+    onClick: () -> Unit = {}
+) {
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     val formattedTime = entry.timestamp.format(timeFormatter)
     
@@ -384,6 +424,7 @@ fun WaterIntakeItem(entry: WaterIntakeEntry) {
         modifier = Modifier
             .width(80.dp)
             .padding(horizontal = 4.dp, vertical = 8.dp)
+            .clickable(onClick = onClick) // Thêm clickable để xử lý sự kiện click
     ) {
         // Biểu tượng nước dựa vào lượng
         if (entry.amount == 300) {
@@ -435,6 +476,78 @@ fun WaterIntakeItem(entry: WaterIntakeEntry) {
             fontSize = 12.sp,
             modifier = Modifier.padding(top = 2.dp)
         )
+    }
+}
+
+@Composable
+fun DeleteConfirmationDialog(
+    entry: WaterIntakeEntry?,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    entry?.let {
+        Dialog(onDismissRequest = onDismiss) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = Color.White, shape = RoundedCornerShape(16.dp))
+                    .padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Xóa lượng nước đã uống?",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF00B2FF)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "Bạn có chắc muốn xóa ${entry.amount}ml nước đã uống lúc ${entry.timestamp.format(DateTimeFormatter.ofPattern("HH:mm"))}?",
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center,
+                        color = Color.Gray
+                    )
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        // Nút Hủy
+                        Button(
+                            onClick = onDismiss,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.LightGray
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp)
+                        ) {
+                            Text("Hủy", color = Color.Black)
+                        }
+                        
+                        // Nút Xóa
+                        Button(
+                            onClick = onConfirm,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFFF5252)
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 8.dp)
+                        ) {
+                            Text("Xóa", color = Color.White)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

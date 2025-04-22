@@ -12,6 +12,7 @@ import com.example.hydromate.model.UserWaterGoal
 import com.example.hydromate.ui.screens.GenderSelectionScreen
 import com.example.hydromate.ui.screens.HomeScreen
 import com.example.hydromate.ui.screens.LoadingScreen
+import com.example.hydromate.ui.screens.SettingsScreen
 import com.example.hydromate.ui.screens.SleepTimeScreen
 import com.example.hydromate.ui.screens.WakeUpTimeScreen
 import com.example.hydromate.ui.screens.WaterGoalResultScreen
@@ -130,11 +131,21 @@ fun AppNavigation(
             HomeScreen(
                 userWaterGoal = userWaterGoal,
                 onSettingsClick = {
-                    // Có thể thêm điều hướng đến màn hình cài đặt ở đây
+                    // Điều hướng đến màn hình cài đặt
+                    navController.navigate(AppScreens.Settings.route)
                 },
                 onStatsClick = {
                     // Có thể thêm điều hướng đến màn hình thống kê ở đây
                 }
+            )
+        }
+        
+        composable(AppScreens.Settings.route) {
+            SettingsScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                appVersion = "1.0"
             )
         }
     }
@@ -149,4 +160,5 @@ sealed class AppScreens(val route: String) {
     object Loading : AppScreens("loading")
     object WaterGoalResult : AppScreens("water_goal_result")
     object Home : AppScreens("home")
+    object Settings : AppScreens("settings")
 } 
