@@ -18,8 +18,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Divider
@@ -57,25 +58,35 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.window.DialogProperties
+import com.example.hydromate.data.AppViewModel
+import com.example.hydromate.model.NotificationSettings
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun SettingsScreen(
+    appViewModel: AppViewModel,
     onBackClick: () -> Unit = {},
+    onHomeClick: () -> Unit = {},
+    onStatsClick: () -> Unit = {},
     appVersion: String = "1.0"
 ) {
     val context = LocalContext.current
     val primaryBlue = Color(0xFF00B2FF)
     val scrollState = rememberScrollState()
     
+    // Lấy cài đặt thông báo từ ViewModel
+    val notificationSettings by appViewModel.notificationSettings.collectAsState()
+    
     // State cho dialog thông báo
     var showNotificationDialog by remember { mutableStateOf(false) }
-    var notificationsEnabled by remember { mutableStateOf(true) }
-    var notificationInterval by remember { mutableStateOf(60) } // 60 phút
-    var startTime by remember { mutableStateOf("08:00") }
-    var endTime by remember { mutableStateOf("22:00") }
+    
+    // State tạm thời cho dialog
+    var tempSettings by remember(notificationSettings) { 
+        mutableStateOf(notificationSettings) 
+    }
     
     Box(
         modifier = Modifier
@@ -94,7 +105,6 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scrollState)
         ) {
             // Toolbar
             Row(
@@ -113,7 +123,7 @@ fun SettingsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        imageVector = Icons.Filled.KeyboardArrowLeft,
                         contentDescription = "Quay lại",
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
@@ -154,138 +164,142 @@ fun SettingsScreen(
             )
             
             // Danh sách các mục cài đặt
-            Box(
+            Column(
                 modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(scrollState)
                     .fillMaxWidth()
                     .padding(top = 12.dp, start = 16.dp, end = 16.dp)
                     .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
                     .background(Color.White)
+                    .padding(vertical = 8.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                ) {
-                    // Lời nhắc nhở
-                    SettingItem(
-                        icon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_notifications),
-                                contentDescription = "Lời nhắc nhở",
-                                tint = primaryBlue
-                            )
-                        },
-                        title = "Lời nhắc nhở",
-                        subtitle = if (notificationsEnabled) 
-                            "Mỗi $notificationInterval phút từ $startTime đến $endTime" 
-                        else 
-                            "Đã tắt",
-                        onClick = {
-                            showNotificationDialog = true
-                        }
-                    )
-                    
-                    Divider(modifier = Modifier.padding(start = 56.dp, end = 16.dp))
-                    
-                    // Đánh giá chúng tôi
-                    SettingItem(
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Đánh giá",
-                                tint = Color(0xFFFFD700)
-                            )
-                        },
-                        title = "Đánh giá chúng tôi",
-                        onClick = {
-                            // Mở Google Play để đánh giá ứng dụng
-                            try {
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    data = Uri.parse("market://details?id=${context.packageName}")
-                                }
-                                context.startActivity(intent)
-                            } catch (e: Exception) {
-                                // Nếu không có Google Play, mở trên trình duyệt web
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    data = Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")
-                                }
-                                context.startActivity(intent)
+                // Lời nhắc nhở
+                SettingItem(
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_notifications),
+                            contentDescription = "Lời nhắc nhở",
+                            tint = primaryBlue
+                        )
+                    },
+                    title = "Lời nhắc nhở",
+                    subtitle = if (notificationSettings.enabled) 
+                        "Mỗi ${notificationSettings.intervalMinutes} phút từ ${notificationSettings.startTime} đến ${notificationSettings.endTime}" 
+                    else 
+                        "Đã tắt",
+                    onClick = {
+                        // Reset cài đặt tạm thời khi mở dialog
+                        tempSettings = notificationSettings
+                        showNotificationDialog = true
+                    }
+                )
+                
+                Divider(modifier = Modifier.padding(start = 56.dp, end = 16.dp))
+                
+                // Đánh giá chúng tôi
+                SettingItem(
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = "Đánh giá",
+                            tint = Color(0xFFFFD700)
+                        )
+                    },
+                    title = "Đánh giá chúng tôi",
+                    onClick = {
+                        // Mở Google Play để đánh giá ứng dụng
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = Uri.parse("market://details?id=${context.packageName}")
                             }
-                        }
-                    )
-                    
-                    Divider(modifier = Modifier.padding(start = 56.dp, end = 16.dp))
-                    
-                    // Nhận xét
-                    SettingItem(
-                        icon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_email),
-                                contentDescription = "Nhận xét",
-                                tint = primaryBlue
-                            )
-                        },
-                        title = "Nhận xét",
-                        onClick = {
-                            // Gửi email phản hồi
-                            val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                data = Uri.parse("mailto:feedback@hydromate.com")
-                                putExtra(Intent.EXTRA_SUBJECT, "Phản hồi về ứng dụng HydroMate")
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            // Nếu không có Google Play, mở trên trình duyệt web
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")
                             }
                             context.startActivity(intent)
                         }
-                    )
-                    
-                    Divider(modifier = Modifier.padding(start = 56.dp, end = 16.dp))
-                    
-                    // Khác
-                    SettingItem(
-                        icon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_more),
-                                contentDescription = "Khác",
-                                tint = primaryBlue
-                            )
-                        },
-                        title = "Khác",
-                        onClick = {
-                            // Xử lý khi nhấn vào mục khác
+                    }
+                )
+                
+                Divider(modifier = Modifier.padding(start = 56.dp, end = 16.dp))
+                
+                // Nhận xét
+                SettingItem(
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_email),
+                            contentDescription = "Nhận xét",
+                            tint = primaryBlue
+                        )
+                    },
+                    title = "Nhận xét",
+                    onClick = {
+                        // Gửi email phản hồi
+                        val intent = Intent(Intent.ACTION_SENDTO).apply {
+                            data = Uri.parse("mailto:feedback@hydromate.com")
+                            putExtra(Intent.EXTRA_SUBJECT, "Phản hồi về ứng dụng HydroMate")
                         }
-                    )
-                    
-                    Divider(modifier = Modifier.padding(start = 56.dp, end = 16.dp))
-                    
-                    // Phiên bản
-                    SettingItem(
-                        icon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_info),
-                                contentDescription = "Phiên bản",
-                                tint = Color.Gray
-                            )
-                        },
-                        title = "Phiên bản: $appVersion",
-                        onClick = {
-                            // Không làm gì khi nhấn vào phiên bản
-                        },
-                        isClickable = false
-                    )
-                }
+                        context.startActivity(intent)
+                    }
+                )
+                
+                Divider(modifier = Modifier.padding(start = 56.dp, end = 16.dp))
+                
+                // Khác
+                SettingItem(
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_more),
+                            contentDescription = "Khác",
+                            tint = primaryBlue
+                        )
+                    },
+                    title = "Khác",
+                    onClick = {
+                        // Xử lý khi nhấn vào mục khác
+                    }
+                )
+                
+                Divider(modifier = Modifier.padding(start = 56.dp, end = 16.dp))
+                
+                // Phiên bản
+                SettingItem(
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_info),
+                            contentDescription = "Phiên bản",
+                            tint = Color.Gray
+                        )
+                    },
+                    title = "Phiên bản: $appVersion",
+                    onClick = {
+                        // Không làm gì khi nhấn vào phiên bản
+                    },
+                    isClickable = false
+                )
             }
         }
         
         // Dialog cài đặt thông báo
         if (showNotificationDialog) {
             NotificationSettingsDialog(
-                notificationsEnabled = notificationsEnabled,
-                notificationInterval = notificationInterval,
-                startTime = startTime,
-                endTime = endTime,
-                onEnabledChange = { notificationsEnabled = it },
-                onIntervalChange = { notificationInterval = it },
-                onStartTimeChange = { startTime = it },
-                onEndTimeChange = { endTime = it },
-                onDismiss = { showNotificationDialog = false }
+                notificationsEnabled = tempSettings.enabled,
+                notificationInterval = tempSettings.intervalMinutes,
+                startTime = tempSettings.startTime,
+                endTime = tempSettings.endTime,
+                onEnabledChange = { tempSettings = tempSettings.copy(enabled = it) },
+                onIntervalChange = { tempSettings = tempSettings.copy(intervalMinutes = it) },
+                onStartTimeChange = { tempSettings = tempSettings.copy(startTime = it) },
+                onEndTimeChange = { tempSettings = tempSettings.copy(endTime = it) },
+                onDismiss = { showNotificationDialog = false },
+                onSave = {
+                    // Lưu cài đặt và cập nhật lịch thông báo
+                    appViewModel.saveNotificationSettings(tempSettings, context)
+                    showNotificationDialog = false
+                }
             )
         }
     }
@@ -345,7 +359,8 @@ fun NotificationSettingsDialog(
     onIntervalChange: (Int) -> Unit,
     onStartTimeChange: (String) -> Unit,
     onEndTimeChange: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onSave: () -> Unit
 ) {
     val primaryBlue = Color(0xFF00B2FF)
     
@@ -471,21 +486,25 @@ fun NotificationSettingsDialog(
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                // Nút lưu
+                // Nút lưu cài đặt
                 Button(
-                    onClick = onDismiss,
+                    onClick = onSave,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = primaryBlue
                     )
                 ) {
-                    Text("Lưu cài đặt")
+                    Text(
+                        text = "Lưu cài đặt",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
     }
     
-    // Hiển thị dialog chọn thời gian bắt đầu
+    // Dialog chọn thời gian bắt đầu
     if (showStartTimePicker) {
         TimePickerDialog(
             initialTime = parseTimeString(startTime),
@@ -498,7 +517,7 @@ fun NotificationSettingsDialog(
         )
     }
     
-    // Hiển thị dialog chọn thời gian kết thúc
+    // Dialog chọn thời gian kết thúc
     if (showEndTimePicker) {
         TimePickerDialog(
             initialTime = parseTimeString(endTime),
@@ -600,6 +619,6 @@ private fun formatTime(hour: Int, minute: Int): String {
 @Composable
 fun SettingsScreenPreview() {
     HydroMateTheme {
-        SettingsScreen()
+        // PreviewSettingsScreen()
     }
 } 

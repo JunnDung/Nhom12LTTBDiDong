@@ -24,7 +24,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Notifications
@@ -65,16 +65,17 @@ import com.example.hydromate.model.UserWaterGoal
 import com.example.hydromate.model.WaterIntakeEntry
 import com.example.hydromate.ui.theme.HydroMateTheme
 import java.time.format.DateTimeFormatter
+import androidx.compose.foundation.BorderStroke
 
 @Composable
 fun HomeScreen(
     userWaterGoal: UserWaterGoal,
+    waterIntakeEntries: List<WaterIntakeEntry>,
+    onAddWaterIntake: (Int) -> Unit,
+    onDeleteWaterIntake: (String) -> Unit,
     onSettingsClick: () -> Unit = {},
     onStatsClick: () -> Unit = {}
 ) {
-    // Lưu trữ danh sách các lần uống nước trong state
-    var waterIntakeEntries by remember { mutableStateOf(listOf<WaterIntakeEntry>()) }
-    
     // Lưu trữ thông tin và trạng thái dialog xóa
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedEntryForDelete by remember { mutableStateOf<WaterIntakeEntry?>(null) }
@@ -85,9 +86,6 @@ fun HomeScreen(
     // Tính tổng lượng nước đã uống
     val currentWaterIntake = waterIntakeEntries.sumOf { it.amount }
     
-    // Dialog thêm nước
-    var showAddWaterDialog by remember { mutableStateOf(false) }
-    
     // Tính toán tiến trình
     val progress = if (waterGoal > 0) {
         (currentWaterIntake.toFloat() / waterGoal.toFloat()).coerceAtMost(1.0f)
@@ -97,6 +95,7 @@ fun HomeScreen(
     
     // Màu chính của ứng dụng
     val primaryBlue = Color(0xFF00B2FF)
+    val lightBlue = Color(0xFF99DDFF) // Màu xanh nước biển nhạt cho thanh tiến trình
     val lightYellow = Color(0xFFFFE600)
     val transparentWhite = Color(0x33FFFFFF)
     val orangeIndicator = Color(0xFFFF6D33)
@@ -104,7 +103,7 @@ fun HomeScreen(
     // Hàm xử lý xóa nước
     val handleDeleteConfirmation = {
         selectedEntryForDelete?.let { entry ->
-            waterIntakeEntries = waterIntakeEntries.filter { it.id != entry.id }
+            onDeleteWaterIntake(entry.id)
         }
         showDeleteDialog = false
         selectedEntryForDelete = null
@@ -224,7 +223,7 @@ fun HomeScreen(
                             modifier = Modifier
                                 .fillMaxWidth(progress)
                                 .fillMaxSize()
-                                .background(primaryBlue)
+                                .background(lightBlue)
                         )
                     }
                     
@@ -278,21 +277,9 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Nút quay lại
-                IconButton(
-                    onClick = { /* Xử lý sự kiện quay lại */ },
-                    modifier = Modifier.size(38.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = "Quay lại",
-                        tint = Color.White,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
                 
-                // Khoảng trống giữa nút quay lại và chọn ngày
-                Spacer(modifier = Modifier.width(60.dp))
+
+                Spacer(modifier = Modifier.width(98.dp))
                 
                 // Nút chọn ngày hiện tại
                 Row(
@@ -326,25 +313,26 @@ fun HomeScreen(
                 // Khoảng trống để đẩy nội dung xuống
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Hiển thị danh sách các lần uống nước dạng lưới
+                // Hiển thị danh sách các lần uống nước dạng lưới ngang (4 vật/hàng)
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(4),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 16.dp),
-                    contentPadding = PaddingValues(vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    content = {
-                        items(waterIntakeEntries) { entry ->
-                            WaterIntakeItem(
-                                entry = entry,
-                                onClick = { onWaterItemClick(entry) }
-                            )
-                        }
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(waterIntakeEntries) { entry ->
+                        val formattedTime = entry.getTimestamp().format(DateTimeFormatter.ofPattern("HH:mm"))
+                        
+                        WaterIntakeItem(
+                            entry = entry,
+                            formattedTime = formattedTime,
+                            onClick = { onWaterItemClick(entry) }
+                        )
                     }
-                )
+                }
             } else {
                 // Thông báo ở giữa màn hình
                 Text(
@@ -369,7 +357,7 @@ fun HomeScreen(
             contentAlignment = Alignment.BottomCenter
         ) {
             FloatingActionButton(
-                onClick = { showAddWaterDialog = true },
+                onClick = { onAddWaterIntake(0) },
                 modifier = Modifier.size(70.dp),
                 containerColor = lightYellow,
                 contentColor = Color.DarkGray,
@@ -383,28 +371,13 @@ fun HomeScreen(
                 )
             }
         }
-
-        // Hiển thị dialog thêm nước nếu cần
-        if (showAddWaterDialog) {
-            AddWaterScreen(
-                onDismiss = { showAddWaterDialog = false },
-                onAddWater = { entry ->
-                    // Sử dụng cập nhật state để trigger recomposition
-                    waterIntakeEntries = listOf(entry) + waterIntakeEntries
-                    showAddWaterDialog = false
-                }
-            )
-        }
         
-        // Hiển thị dialog xác nhận xóa nếu cần
+        // Dialog xác nhận xóa
         if (showDeleteDialog) {
             DeleteConfirmationDialog(
                 entry = selectedEntryForDelete,
                 onConfirm = handleDeleteConfirmation,
-                onDismiss = { 
-                    showDeleteDialog = false
-                    selectedEntryForDelete = null
-                }
+                onDismiss = { showDeleteDialog = false }
             )
         }
     }
@@ -413,17 +386,14 @@ fun HomeScreen(
 @Composable
 fun WaterIntakeItem(
     entry: WaterIntakeEntry,
+    formattedTime: String,
     onClick: () -> Unit = {}
 ) {
-    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-    val formattedTime = entry.timestamp.format(timeFormatter)
-    
-    // Thiết kế nhỏ gọn hơn để hiển thị 4 item/hàng
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .width(80.dp)
-            .padding(horizontal = 4.dp, vertical = 8.dp)
+            .padding(vertical = 4.dp)
             .clickable(onClick = onClick) // Thêm clickable để xử lý sự kiện click
     ) {
         // Biểu tượng nước dựa vào lượng
@@ -432,12 +402,12 @@ fun WaterIntakeItem(
                 painter = painterResource(id = R.drawable.nuoc300ml),
                 contentDescription = "Ly nước 300ml",
                 tint = Color(0xFF57CAFF),
-                modifier = Modifier.size(50.dp)
+                modifier = Modifier.size(45.dp)
             )
             Text(
                 text = "300 ml",
                 color = Color.Gray,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 modifier = Modifier.padding(top = 2.dp)
             )
         } else if (entry.amount == 700) {
@@ -445,12 +415,12 @@ fun WaterIntakeItem(
                 painter = painterResource(id = R.drawable.nuoc700ml),
                 contentDescription = "Chai nước 700ml",
                 tint = Color(0xFF57CAFF),
-                modifier = Modifier.size(50.dp)
+                modifier = Modifier.size(45.dp)
             )
             Text(
                 text = "700 ml",
                 color = Color.Gray,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 modifier = Modifier.padding(top = 2.dp)
             )
         } else {
@@ -459,12 +429,12 @@ fun WaterIntakeItem(
                 painter = painterResource(id = R.drawable.nuoc300ml),
                 contentDescription = "Lượng nước tùy chỉnh",
                 tint = Color(0xFF57CAFF),
-                modifier = Modifier.size(50.dp)
+                modifier = Modifier.size(45.dp)
             )
             Text(
                 text = "${entry.amount} ml",
                 color = Color.Gray,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 modifier = Modifier.padding(top = 2.dp)
             )
         }
@@ -473,7 +443,7 @@ fun WaterIntakeItem(
         Text(
             text = formattedTime,
             color = Color.Gray,
-            fontSize = 12.sp,
+            fontSize = 10.sp,
             modifier = Modifier.padding(top = 2.dp)
         )
     }
@@ -507,7 +477,7 @@ fun DeleteConfirmationDialog(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
-                        text = "Bạn có chắc muốn xóa ${entry.amount}ml nước đã uống lúc ${entry.timestamp.format(DateTimeFormatter.ofPattern("HH:mm"))}?",
+                        text = "Bạn có chắc muốn xóa ${entry.amount}ml nước đã uống lúc ${entry.getTimestamp().format(DateTimeFormatter.ofPattern("HH:mm"))}?",
                         fontSize = 16.sp,
                         textAlign = TextAlign.Center,
                         color = Color.Gray
@@ -562,6 +532,6 @@ fun HomeScreenPreview() {
             sleepTime = "22:00",
             dailyWaterGoal = 2310
         )
-        HomeScreen(userWaterGoal = sampleUserWaterGoal)
+        HomeScreen(userWaterGoal = sampleUserWaterGoal, waterIntakeEntries = listOf(), onAddWaterIntake = {}, onDeleteWaterIntake = {})
     }
 } 

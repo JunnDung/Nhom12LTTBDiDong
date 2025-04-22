@@ -1,5 +1,8 @@
 package com.example.hydromate.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class UserWaterGoal(
     val gender: String = "", // "Nam" hoặc "Nữ"
     val weight: Int = 0, // Cân nặng tính bằng kg

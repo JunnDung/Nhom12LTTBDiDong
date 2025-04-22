@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,6 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -76,11 +77,13 @@ fun AddWaterScreen(
     val maxWater = 1000
     
     Dialog(onDismissRequest = onDismiss) {
-        Box(
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(color = Color.White, shape = RoundedCornerShape(16.dp))
-                .padding(bottom = 16.dp)
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -94,7 +97,7 @@ fun AddWaterScreen(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = primaryBlue,
-                    modifier = Modifier.padding(vertical = 16.dp)
+                    modifier = Modifier.padding(vertical = 8.dp)
                 )
                 
                 // Hiển thị lượng nước đã chọn
@@ -108,7 +111,7 @@ fun AddWaterScreen(
                         text = "${if (showCustomInput) customAmount else selectedAmount} ml",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = primaryBlue
                     )
                 }
                 
@@ -206,7 +209,7 @@ fun AddWaterScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 24.dp),
+                        .padding(vertical = 16.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -250,8 +253,8 @@ fun AddWaterScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .clickable {
-                                selectedAmount = 700
                                 showCustomInput = false
+                                selectedAmount = 700
                             }
                     ) {
                         Box(
@@ -259,7 +262,7 @@ fun AddWaterScreen(
                                 .size(60.dp)
                                 .border(
                                     width = 2.dp,
-                                    color = if (selectedAmount == 700 && !showCustomInput) primaryBlue else Color.LightGray,
+                                    color = if (!showCustomInput && selectedAmount == 700) primaryBlue else Color.LightGray,
                                     shape = RoundedCornerShape(8.dp)
                                 )
                                 .padding(8.dp),
@@ -267,15 +270,15 @@ fun AddWaterScreen(
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.nuoc700ml),
-                                contentDescription = "Chai nước 700ml",
-                                tint = if (selectedAmount == 700 && !showCustomInput) primaryBlue else Color.LightGray,
+                                contentDescription = "700ml",
+                                tint = if (!showCustomInput && selectedAmount == 700) primaryBlue else Color.LightGray,
                                 modifier = Modifier.size(40.dp)
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "700ml",
-                            color = if (selectedAmount == 700 && !showCustomInput) primaryBlue else Color.Gray,
+                            color = if (!showCustomInput && selectedAmount == 700) primaryBlue else Color.Gray,
                             fontSize = 14.sp
                         )
                     }
@@ -285,8 +288,8 @@ fun AddWaterScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .clickable {
-                                selectedAmount = 300
                                 showCustomInput = false
+                                selectedAmount = 300
                             }
                     ) {
                         Box(
@@ -294,7 +297,7 @@ fun AddWaterScreen(
                                 .size(60.dp)
                                 .border(
                                     width = 2.dp,
-                                    color = if (selectedAmount == 300 && !showCustomInput) primaryBlue else Color.LightGray,
+                                    color = if (!showCustomInput && selectedAmount == 300) primaryBlue else Color.LightGray,
                                     shape = RoundedCornerShape(8.dp)
                                 )
                                 .padding(8.dp),
@@ -302,49 +305,41 @@ fun AddWaterScreen(
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.nuoc300ml),
-                                contentDescription = "Ly nước 300ml",
-                                tint = if (selectedAmount == 300 && !showCustomInput) primaryBlue else Color.LightGray,
+                                contentDescription = "300ml",
+                                tint = if (!showCustomInput && selectedAmount == 300) primaryBlue else Color.LightGray,
                                 modifier = Modifier.size(40.dp)
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "300ml",
-                            color = if (selectedAmount == 300 && !showCustomInput) primaryBlue else Color.Gray,
+                            color = if (!showCustomInput && selectedAmount == 300) primaryBlue else Color.Gray,
                             fontSize = 14.sp
                         )
                     }
                 }
                 
-                // Row thông báo và nút thêm
-                Row(
+                // Nút thêm nước
+                Button(
+                    onClick = {
+                        val amount = if (showCustomInput) customAmount else selectedAmount
+                        val waterEntry = WaterIntakeEntry.create(amount)
+                        onAddWater(waterEntry)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 16.dp),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
+                        .height(50.dp)
+                        .padding(top = 8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = primaryBlue
+                    ),
+                    shape = RoundedCornerShape(25.dp)
                 ) {
-                    // Nút thêm nước
-                    FloatingActionButton(
-                        onClick = {
-                            val amount = if (showCustomInput) customAmount else selectedAmount
-                            if (amount > 0) {
-                                onAddWater(WaterIntakeEntry(amount = amount))
-                                onDismiss()
-                            }
-                        },
-                        modifier = Modifier.size(50.dp),
-                        containerColor = lightYellow,
-                        contentColor = Color.DarkGray,
-                        shape = CircleShape
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Thêm nước",
-                            tint = Color.DarkGray,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                    Text(
+                        text = "Thêm lượng nước",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
