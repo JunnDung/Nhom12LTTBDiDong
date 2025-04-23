@@ -44,11 +44,9 @@ class MainActivity : ComponentActivity() {
     ) { isGranted ->
         if (isGranted) {
             // Nếu quyền được cấp, lên lịch thông báo
-            Log.d(TAG, "Quyền thông báo được cấp, lên lịch thông báo")
             scheduleNotificationsIfEnabled()
         } else {
             // Thông báo người dùng về việc cần cấp quyền
-            Log.d(TAG, "Quyền thông báo bị từ chối")
             Toast.makeText(
                 this, 
                 "Bạn cần cấp quyền thông báo để nhận nhắc nhở uống nước", 
@@ -177,8 +175,6 @@ class MainActivity : ComponentActivity() {
         // Nếu có đủ quyền, lên lịch thông báo
         if (canSchedule) {
             scheduleNotificationsIfEnabled()
-        } else {
-            Log.d(TAG, "Không đủ quyền để lên lịch thông báo")
         }
     }
     
@@ -190,10 +186,7 @@ class MainActivity : ComponentActivity() {
                 
                 // Lên lịch thông báo nếu đã bật
                 if (notificationSettings.enabled) {
-                    Log.d(TAG, "Lên lịch thông báo với cài đặt: $notificationSettings")
                     NotificationHelper.scheduleNotifications(applicationContext, notificationSettings)
-                } else {
-                    Log.d(TAG, "Thông báo bị tắt trong cài đặt")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Lỗi khi lên lịch thông báo: ${e.message}", e)

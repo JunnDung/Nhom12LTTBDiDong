@@ -64,7 +64,6 @@ fun AddWaterScreen(
     onDismiss: () -> Unit = {},
     onAddWater: (WaterIntakeEntry) -> Unit = {}
 ) {
-    // Màu chính của ứng dụng
     val primaryBlue = Color(0xFF00B2FF)
     val lightYellow = Color(0xFFFFE600)
     
@@ -72,7 +71,6 @@ fun AddWaterScreen(
     var customAmount by remember { mutableIntStateOf(500) }
     var showCustomInput by remember { mutableStateOf(false) }
     
-    // Kích thước tối đa và tối thiểu cho slider
     val minWater = 50
     val maxWater = 1000
     
@@ -91,7 +89,6 @@ fun AddWaterScreen(
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Tiêu đề
                 Text(
                     text = "Thêm nước uống",
                     fontSize = 20.sp,
@@ -100,7 +97,6 @@ fun AddWaterScreen(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
                 
-                // Hiển thị lượng nước đã chọn
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -115,9 +111,7 @@ fun AddWaterScreen(
                     )
                 }
                 
-                // Phần tùy chỉnh nếu đã chọn
                 if (showCustomInput) {
-                    // Các nút tăng giảm và slider
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -125,7 +119,6 @@ fun AddWaterScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Nút giảm
                         Button(
                             onClick = { 
                                 customAmount = (customAmount - 50).coerceAtLeast(minWater)
@@ -144,7 +137,6 @@ fun AddWaterScreen(
                             )
                         }
                         
-                        // Slider cho phép tùy chỉnh nhanh
                         Slider(
                             value = customAmount.toFloat(),
                             onValueChange = { customAmount = it.toInt() },
@@ -160,7 +152,6 @@ fun AddWaterScreen(
                             )
                         )
                         
-                        // Nút tăng
                         Button(
                             onClick = { 
                                 customAmount = (customAmount + 50).coerceAtMost(maxWater)
@@ -179,7 +170,6 @@ fun AddWaterScreen(
                         }
                     }
                     
-                    // TextField để nhập trực tiếp
                     OutlinedTextField(
                         value = customAmount.toString(),
                         onValueChange = { 
@@ -205,7 +195,6 @@ fun AddWaterScreen(
                     )
                 }
                 
-                // Các tùy chọn lượng nước
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -213,7 +202,6 @@ fun AddWaterScreen(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Tùy chỉnh
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
@@ -248,7 +236,6 @@ fun AddWaterScreen(
                         )
                     }
                     
-                    // 700ml
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
@@ -283,7 +270,6 @@ fun AddWaterScreen(
                         )
                     }
                     
-                    // 300ml
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
@@ -319,7 +305,6 @@ fun AddWaterScreen(
                     }
                 }
                 
-                // Nút thêm nước
                 Button(
                     onClick = {
                         val amount = if (showCustomInput) customAmount else selectedAmount

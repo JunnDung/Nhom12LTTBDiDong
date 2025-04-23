@@ -100,7 +100,6 @@ object NotificationHelper {
             with(NotificationManagerCompat.from(context)) {
                 notify(NOTIFICATION_ID, builder.build())
             }
-            Log.d(TAG, "Đã hiển thị thông báo thành công")
         } catch (e: SecurityException) {
             // Xử lý ngoại lệ liên quan đến quyền
             Log.e(TAG, "Lỗi hiển thị thông báo (quyền): ${e.message}")
@@ -116,7 +115,6 @@ object NotificationHelper {
         cancelAllNotifications(context)
         
         if (!settings.enabled) {
-            Log.d(TAG, "Thông báo đã bị tắt, không lên lịch")
             return
         }
         
@@ -146,38 +144,29 @@ object NotificationHelper {
             val now = LocalDateTime.now()
             val currentTime = now.toLocalTime()
             
-            Log.d(TAG, "Thời gian hiện tại: $currentTime")
-            Log.d(TAG, "Thời gian bắt đầu: $startTime")
-            Log.d(TAG, "Thời gian kết thúc: $endTime")
-            
             // Tính toán thời gian bắt đầu kế tiếp
             var nextTime: LocalDateTime
             
             if (currentTime.isBefore(startTime)) {
                 // Thời gian hiện tại trước thời gian bắt đầu => lên lịch cho thời gian bắt đầu hôm nay
                 nextTime = now.with(startTime)
-                Log.d(TAG, "Thời gian hiện tại trước thời gian bắt đầu - lên lịch cho: $nextTime")
             } else if (currentTime.isAfter(endTime)) {
                 // Thời gian hiện tại sau thời gian kết thúc => lên lịch cho thời gian bắt đầu ngày mai
                 nextTime = now.plusDays(1).with(startTime)
-                Log.d(TAG, "Thời gian hiện tại sau thời gian kết thúc - lên lịch cho ngày mai: $nextTime")
             } else {
                 // Thời gian hiện tại nằm trong khoảng => lên lịch sau khoảng thời gian
                 // Kiểm tra xem có đến giờ hiển thị thông báo ngay không
                 if (isTriggerTimeNow(currentTime, settings)) {
                     // Hiển thị thông báo ngay lập tức
                     showNotification(context)
-                    Log.d(TAG, "Hiển thị thông báo ngay lập tức theo giờ hiện tại: $currentTime")
                 }
                 
                 // Lên lịch cho thời gian kế tiếp
                 nextTime = now.plusMinutes(settings.intervalMinutes.toLong())
-                Log.d(TAG, "Thời gian hiện tại trong khoảng - lên lịch tiếp theo sau ${settings.intervalMinutes} phút: $nextTime")
                 
                 // Nếu thời gian kế tiếp vượt quá thời gian kết thúc, chuyển sang ngày hôm sau
                 if (nextTime.toLocalTime().isAfter(endTime)) {
                     nextTime = now.plusDays(1).with(startTime)
-                    Log.d(TAG, "Thời gian kế tiếp vượt quá thời gian kết thúc - lên lịch cho ngày mai: $nextTime")
                 }
             }
             
@@ -207,8 +196,6 @@ object NotificationHelper {
                     pendingIntent
                 )
             }
-            
-            Log.d(TAG, "Đã lên lịch thông báo tiếp theo vào: $nextTime (${nextTime.toLocalTime()})")
             
         } catch (e: Exception) {
             Log.e(TAG, "Lỗi khi lên lịch thông báo: ${e.message}", e)
@@ -251,7 +238,6 @@ object NotificationHelper {
         
         try {
             alarmManager.cancel(pendingIntent)
-            Log.d(TAG, "Đã hủy tất cả thông báo đã lên lịch")
         } catch (e: Exception) {
             Log.e(TAG, "Lỗi khi hủy thông báo: ${e.message}")
         }

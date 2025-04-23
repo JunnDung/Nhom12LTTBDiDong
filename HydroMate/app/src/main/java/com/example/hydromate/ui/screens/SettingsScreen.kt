@@ -1,5 +1,7 @@
 package com.example.hydromate.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,16 +20,23 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDefaults
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,30 +49,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.example.hydromate.R
-import com.example.hydromate.ui.theme.HydroMateTheme
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.TimePickerDefaults
-import androidx.compose.material3.rememberTimePickerState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.window.DialogProperties
+import com.example.hydromate.R
 import com.example.hydromate.data.AppViewModel
 import com.example.hydromate.model.NotificationSettings
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun SettingsScreen(
@@ -77,13 +69,10 @@ fun SettingsScreen(
     val primaryBlue = Color(0xFF00B2FF)
     val scrollState = rememberScrollState()
     
-    // Lấy cài đặt thông báo từ ViewModel
     val notificationSettings by appViewModel.notificationSettings.collectAsState()
     
-    // State cho dialog thông báo
     var showNotificationDialog by remember { mutableStateOf(false) }
     
-    // State tạm thời cho dialog
     var tempSettings by remember(notificationSettings) { 
         mutableStateOf(notificationSettings) 
     }
@@ -93,7 +82,6 @@ fun SettingsScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Header với nền xanh
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -101,19 +89,16 @@ fun SettingsScreen(
                 .background(primaryBlue)
         )
         
-        // Nội dung chính
         Column(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            // Toolbar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Nút quay lại
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -132,7 +117,6 @@ fun SettingsScreen(
                 
                 Spacer(modifier = Modifier.width(16.dp))
                 
-                // Biểu tượng nước ở giữa
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -151,7 +135,6 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.weight(1f))
             }
             
-            // Phiên bản ở trên cùng
             Text(
                 text = "Phiên bản: $appVersion",
                 color = Color.White,
@@ -163,7 +146,6 @@ fun SettingsScreen(
                     .padding(bottom = 24.dp)
             )
             
-            // Danh sách các mục cài đặt
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -174,7 +156,6 @@ fun SettingsScreen(
                     .background(Color.White)
                     .padding(vertical = 8.dp)
             ) {
-                // Lời nhắc nhở
                 SettingItem(
                     icon = {
                         Icon(
@@ -189,7 +170,6 @@ fun SettingsScreen(
                     else 
                         "Đã tắt",
                     onClick = {
-                        // Reset cài đặt tạm thời khi mở dialog
                         tempSettings = notificationSettings
                         showNotificationDialog = true
                     }
@@ -197,7 +177,6 @@ fun SettingsScreen(
                 
                 Divider(modifier = Modifier.padding(start = 56.dp, end = 16.dp))
                 
-                // Đánh giá chúng tôi
                 SettingItem(
                     icon = {
                         Icon(
@@ -208,14 +187,12 @@ fun SettingsScreen(
                     },
                     title = "Đánh giá chúng tôi",
                     onClick = {
-                        // Mở Google Play để đánh giá ứng dụng
                         try {
                             val intent = Intent(Intent.ACTION_VIEW).apply {
                                 data = Uri.parse("market://details?id=${context.packageName}")
                             }
                             context.startActivity(intent)
                         } catch (e: Exception) {
-                            // Nếu không có Google Play, mở trên trình duyệt web
                             val intent = Intent(Intent.ACTION_VIEW).apply {
                                 data = Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")
                             }
@@ -226,7 +203,6 @@ fun SettingsScreen(
                 
                 Divider(modifier = Modifier.padding(start = 56.dp, end = 16.dp))
                 
-                // Nhận xét
                 SettingItem(
                     icon = {
                         Icon(
@@ -237,7 +213,6 @@ fun SettingsScreen(
                     },
                     title = "Nhận xét",
                     onClick = {
-                        // Gửi email phản hồi
                         val intent = Intent(Intent.ACTION_SENDTO).apply {
                             data = Uri.parse("mailto:feedback@hydromate.com")
                             putExtra(Intent.EXTRA_SUBJECT, "Phản hồi về ứng dụng HydroMate")
@@ -248,7 +223,6 @@ fun SettingsScreen(
                 
                 Divider(modifier = Modifier.padding(start = 56.dp, end = 16.dp))
                 
-                // Khác
                 SettingItem(
                     icon = {
                         Icon(
@@ -265,7 +239,6 @@ fun SettingsScreen(
                 
                 Divider(modifier = Modifier.padding(start = 56.dp, end = 16.dp))
                 
-                // Phiên bản
                 SettingItem(
                     icon = {
                         Icon(
@@ -283,7 +256,6 @@ fun SettingsScreen(
             }
         }
         
-        // Dialog cài đặt thông báo
         if (showNotificationDialog) {
             NotificationSettingsDialog(
                 notificationsEnabled = tempSettings.enabled,
@@ -296,7 +268,6 @@ fun SettingsScreen(
                 onEndTimeChange = { tempSettings = tempSettings.copy(endTime = it) },
                 onDismiss = { showNotificationDialog = false },
                 onSave = {
-                    // Lưu cài đặt và cập nhật lịch thông báo
                     appViewModel.saveNotificationSettings(tempSettings, context)
                     showNotificationDialog = false
                 }
@@ -364,7 +335,6 @@ fun NotificationSettingsDialog(
 ) {
     val primaryBlue = Color(0xFF00B2FF)
     
-    // State cho dialog thời gian
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
     
@@ -379,7 +349,6 @@ fun NotificationSettingsDialog(
                 .padding(24.dp)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                // Tiêu đề
                 Text(
                     text = "Cài đặt lời nhắc nhở",
                     fontSize = 20.sp,
@@ -389,7 +358,6 @@ fun NotificationSettingsDialog(
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                // Bật/tắt thông báo
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -413,9 +381,7 @@ fun NotificationSettingsDialog(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Các cài đặt thông báo (chỉ hiển thị khi bật thông báo)
                 if (notificationsEnabled) {
-                    // Tần suất thông báo
                     Text(
                         text = "Tần suất thông báo: $notificationInterval phút",
                         fontSize = 16.sp,
@@ -437,7 +403,6 @@ fun NotificationSettingsDialog(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Thời gian bắt đầu
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -461,7 +426,6 @@ fun NotificationSettingsDialog(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Thời gian kết thúc
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -486,7 +450,6 @@ fun NotificationSettingsDialog(
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                // Nút lưu cài đặt
                 Button(
                     onClick = onSave,
                     modifier = Modifier.fillMaxWidth(),
@@ -504,7 +467,6 @@ fun NotificationSettingsDialog(
         }
     }
     
-    // Dialog chọn thời gian bắt đầu
     if (showStartTimePicker) {
         TimePickerDialog(
             initialTime = parseTimeString(startTime),
@@ -517,7 +479,6 @@ fun NotificationSettingsDialog(
         )
     }
     
-    // Dialog chọn thời gian kết thúc
     if (showEndTimePicker) {
         TimePickerDialog(
             initialTime = parseTimeString(endTime),
@@ -613,12 +574,4 @@ private fun parseTimeString(timeString: String): Pair<Int, Int> {
 
 private fun formatTime(hour: Int, minute: Int): String {
     return String.format("%02d:%02d", hour, minute)
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SettingsScreenPreview() {
-    HydroMateTheme {
-        // PreviewSettingsScreen()
-    }
 } 

@@ -75,33 +75,28 @@ fun StatsScreen(
     onHomeClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {}
 ) {
-    // Màu chính của ứng dụng
     val primaryBlue = Color(0xFF00B2FF)
     
-    // State cho việc hiển thị dữ liệu theo tuần, tháng, năm
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("TUẦN", "THÁNG", "NĂM")
     
-    // State cho khoảng thời gian hiện tại
     var currentStartDate by remember { mutableStateOf(LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))) }
     var currentEndDate by remember { mutableStateOf(LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))) }
     
-    // Dialog thêm cân nặng mới
     var showAddWeightDialog by remember { mutableStateOf(false) }
     var selectedWeight by remember { mutableIntStateOf(weightEntries.firstOrNull()?.weight ?: 70) }
     
-    // Cập nhật khoảng thời gian dựa vào tab được chọn
     fun updateDateRange() {
         when (selectedTabIndex) {
-            0 -> { // TUẦN
+            0 -> {
                 currentStartDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
                 currentEndDate = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
             }
-            1 -> { // THÁNG
+            1 -> {
                 currentStartDate = LocalDate.now().withDayOfMonth(1)
                 currentEndDate = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth())
             }
-            2 -> { // NĂM
+            2 -> {
                 currentStartDate = LocalDate.now().withDayOfYear(1)
                 currentEndDate = LocalDate.now().withDayOfYear(LocalDate.now().lengthOfYear())
             }
@@ -113,7 +108,6 @@ fun StatsScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Header với nền xanh
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -121,18 +115,15 @@ fun StatsScreen(
                 .background(primaryBlue)
         )
         
-        // Nội dung chính
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Top Bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Nút quay lại
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -151,7 +142,6 @@ fun StatsScreen(
                 
                 Spacer(modifier = Modifier.width(16.dp))
                 
-                // Biểu tượng thống kê ở giữa
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -170,7 +160,6 @@ fun StatsScreen(
                 Spacer(modifier = Modifier.weight(1f))
             }
             
-            // Tabs cho việc chọn tuần/tháng/năm
             TabRow(
                 selectedTabIndex = selectedTabIndex,
                 modifier = Modifier
@@ -205,7 +194,6 @@ fun StatsScreen(
                 }
             }
             
-            // Khoảng thời gian hiện tại
             Text(
                 text = getDateRangeText(currentStartDate, currentEndDate, selectedTabIndex),
                 modifier = Modifier
@@ -217,7 +205,6 @@ fun StatsScreen(
                 fontWeight = FontWeight.Bold
             )
             
-            // Phần nội dung thống kê (chiếm phần lớn màn hình)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -227,7 +214,6 @@ fun StatsScreen(
                     .background(Color.White)
                     .padding(16.dp)
             ) {
-                // Biểu đồ lượng nước
                 StatsCard(
                     title = "Lượng nước",
                     unit = "%",
@@ -238,7 +224,6 @@ fun StatsScreen(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Biểu đồ cân nặng
                 StatsCard(
                     title = "Cân nặng",
                     unit = "kg",
@@ -247,12 +232,10 @@ fun StatsScreen(
                     color = Color(0xFF4CAF50)
                 )
                 
-                // Thông tin cân nặng hiện tại
                 WeightSummary(weightEntries)
             }
         }
         
-        // FAB để thêm cân nặng mới
         FloatingActionButton(
             onClick = { showAddWeightDialog = true },
             modifier = Modifier
@@ -267,7 +250,6 @@ fun StatsScreen(
             )
         }
         
-        // Dialog thêm cân nặng mới
         if (showAddWeightDialog) {
             androidx.compose.ui.window.Dialog(onDismissRequest = { showAddWeightDialog = false }) {
                 Card(
@@ -297,7 +279,6 @@ fun StatsScreen(
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Nút giảm
                             androidx.compose.material3.IconButton(
                                 onClick = { if (selectedWeight > 1) selectedWeight-- }
                             ) {
@@ -308,7 +289,6 @@ fun StatsScreen(
                                 )
                             }
                             
-                            // Hiển thị cân nặng
                             Text(
                                 text = "$selectedWeight",
                                 fontSize = 32.sp,
@@ -316,7 +296,6 @@ fun StatsScreen(
                                 modifier = Modifier.padding(horizontal = 24.dp)
                             )
                             
-                            // Nút tăng
                             androidx.compose.material3.IconButton(
                                 onClick = { selectedWeight++ }
                             ) {
@@ -336,7 +315,6 @@ fun StatsScreen(
                         
                         Spacer(modifier = Modifier.height(24.dp))
                         
-                        // Nút cập nhật
                         androidx.compose.material3.Button(
                             onClick = {
                                 onAddWeight(selectedWeight)
@@ -377,7 +355,6 @@ fun StatsCard(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Tiêu đề và giá trị hiện tại
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -419,9 +396,7 @@ fun StatsCard(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Biểu đồ đơn giản
             val displayData = if (data.size > 31) {
-                // Nếu có quá nhiều dữ liệu (ví dụ: tháng), chỉ hiển thị 7 mục
                 val step = data.size / 7
                 data.filterIndexed { index, _ -> index % step == 0 }.take(7)
             } else {
@@ -443,7 +418,6 @@ fun StatsCard(
                     ) {
                         val barHeight = 80.dp * value
                         
-                        // Thanh đồ thị
                         Box(
                             modifier = Modifier
                                 .width(12.dp)
@@ -456,7 +430,6 @@ fun StatsCard(
                         
                         Spacer(modifier = Modifier.height(4.dp))
                         
-                        // Nhãn
                         Text(
                             text = label,
                             fontSize = 10.sp,
@@ -466,7 +439,6 @@ fun StatsCard(
                 }
             }
             
-            // Đường cơ sở
             Divider(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -480,13 +452,10 @@ fun StatsCard(
 
 @Composable
 fun WeightSummary(weightEntries: List<WeightEntry>) {
-    // Sắp xếp các mục cân nặng theo thời gian (mới nhất đầu tiên)
     val sortedEntries = weightEntries.sortedByDescending { it.getDate() }
     
-    // Lấy cân nặng hiện tại (mục mới nhất)
     val currentWeight = sortedEntries.firstOrNull()?.weight ?: 0
     
-    // Chỉ hiển thị giá trị tối đa và tối thiểu khi có ít nhất 1 mục
     val maxWeight = if (sortedEntries.isNotEmpty()) {
         sortedEntries.maxOf { it.weight }
     } else 0
@@ -495,7 +464,6 @@ fun WeightSummary(weightEntries: List<WeightEntry>) {
         sortedEntries.minOf { it.weight }
     } else 0
     
-    // Ngày đo cân nặng gần nhất
     val latestDate = sortedEntries.firstOrNull()?.getDate()
     val formattedDate = latestDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "--/--/----"
     
@@ -512,7 +480,6 @@ fun WeightSummary(weightEntries: List<WeightEntry>) {
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Thông tin ngày cập nhật gần nhất
             if (sortedEntries.isNotEmpty()) {
                 Text(
                     text = "Cập nhật: $formattedDate",
@@ -594,20 +561,18 @@ fun WeightSummary(weightEntries: List<WeightEntry>) {
     }
 }
 
-// Hàm helper để lấy đoạn text hiển thị khoảng thời gian
 @RequiresApi(Build.VERSION_CODES.O)
 fun getDateRangeText(startDate: LocalDate, endDate: LocalDate, tabIndex: Int): String {
     val formatter = DateTimeFormatter.ofPattern("MM-dd")
     
     return when (tabIndex) {
-        0 -> "${startDate.format(formatter)}~${endDate.format(formatter)}" // Tuần
-        1 -> startDate.format(DateTimeFormatter.ofPattern("MM-yyyy")) // Tháng
-        2 -> startDate.format(DateTimeFormatter.ofPattern("yyyy")) // Năm
+        0 -> "${startDate.format(formatter)}~${endDate.format(formatter)}"
+        1 -> startDate.format(DateTimeFormatter.ofPattern("MM-yyyy"))
+        2 -> startDate.format(DateTimeFormatter.ofPattern("yyyy"))
         else -> ""
     }
 }
 
-// Hàm để tính phần trăm lượng nước đã uống hôm nay
 @RequiresApi(Build.VERSION_CODES.O)
 fun getTodayWaterPercentage(waterEntries: List<WaterIntakeEntry>, userWaterGoal: UserWaterGoal): Int {
     val today = LocalDate.now()
@@ -625,7 +590,6 @@ fun getTodayWaterPercentage(waterEntries: List<WaterIntakeEntry>, userWaterGoal:
     }
 }
 
-// Hàm helper để tạo dữ liệu cho biểu đồ nước
 @RequiresApi(Build.VERSION_CODES.O)
 fun getWaterPercentageData(
     waterEntries: List<WaterIntakeEntry>,
@@ -636,7 +600,7 @@ fun getWaterPercentageData(
     val dailyGoal = userWaterGoal.dailyWaterGoal.toFloat()
     
     return when (tabIndex) {
-        0 -> { // Tuần
+        0 -> {
             val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             val daysOfWeek = listOf("Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "CN")
             
@@ -658,7 +622,7 @@ fun getWaterPercentageData(
                 day to percentage
             }
         }
-        1 -> { // Tháng
+        1 -> {
             val startOfMonth = today.withDayOfMonth(1)
             val weeks = (1..4).map { "T$it" }
             
@@ -667,7 +631,6 @@ fun getWaterPercentageData(
                 val weekEnd = if (index < 3) {
                     weekStart.plusWeeks(1).minusDays(1)
                 } else {
-                    // Tuần cuối có thể kéo dài đến hết tháng
                     startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth())
                 }
                 
@@ -678,7 +641,6 @@ fun getWaterPercentageData(
                     }
                     .sumOf { it.amount }
                 
-                // Tính mục tiêu nước cho khoảng thời gian một tuần
                 val daysInWeek = weekEnd.toEpochDay() - weekStart.toEpochDay() + 1
                 val weeklyGoal = dailyGoal * daysInWeek
                 
@@ -691,7 +653,7 @@ fun getWaterPercentageData(
                 week to percentage
             }
         }
-        else -> { // Năm
+        else -> {
             val months = (1..12).map { "T$it" }
             
             months.mapIndexed { index, month ->
@@ -703,7 +665,6 @@ fun getWaterPercentageData(
                     }
                     .sumOf { it.amount }
                 
-                // Giả định rằng mục tiêu hàng tháng là mục tiêu hàng ngày * số ngày trong tháng
                 val daysInMonth = currentMonth.lengthOfMonth()
                 val monthlyGoal = dailyGoal * daysInMonth
                 
@@ -719,7 +680,6 @@ fun getWaterPercentageData(
     }
 }
 
-// Hàm helper để tạo dữ liệu cho biểu đồ cân nặng
 @RequiresApi(Build.VERSION_CODES.O)
 fun getWeightData(
     weightEntries: List<WeightEntry>,
@@ -740,24 +700,22 @@ fun getWeightData(
     val range = if (maxWeight > minWeight) maxWeight - minWeight else 10f
     
     return when (tabIndex) {
-        0 -> { // Tuần
+        0 -> {
             val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             val daysOfWeek = listOf("Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "CN")
             
             daysOfWeek.mapIndexed { index, day ->
                 val currentDate = startOfWeek.plusDays(index.toLong())
                 
-                // Tìm mục cân nặng gần nhất đến ngày này (có thể là trước đó)
                 val weightForDay = weightEntries
                     .filter { it.getDate().isEqual(currentDate) || it.getDate().isBefore(currentDate) }
                     .maxByOrNull { it.getDate() }
                 
                 if (weightForDay != null) {
-                    // Chuẩn hóa cân nặng để hiển thị trên biểu đồ
                     val normalizedWeight = if (range > 0) {
                         (weightForDay.weight - minWeight) / range
                     } else {
-                        0.5f // Nếu min = max thì hiển thị ở giữa
+                        0.5f
                     }
                     day to normalizedWeight
                 } else {
@@ -765,7 +723,7 @@ fun getWeightData(
                 }
             }
         }
-        1 -> { // Tháng
+        1 -> {
             val startOfMonth = today.withDayOfMonth(1)
             val weeks = (1..4).map { "T$it" }
             
@@ -774,11 +732,9 @@ fun getWeightData(
                 val weekEnd = if (index < 3) {
                     weekStart.plusWeeks(1).minusDays(1)
                 } else {
-                    // Tuần cuối có thể kéo dài đến hết tháng
                     startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth())
                 }
                 
-                // Tìm mục cân nặng trong tuần này
                 val weightForWeek = weightEntries
                     .filter { 
                         val entryDate = it.getDate()
@@ -787,7 +743,6 @@ fun getWeightData(
                     }
                     .maxByOrNull { it.getDate() }
                 
-                // Nếu không có, tìm mục gần nhất trước đó
                 val fallbackWeight = if (weightForWeek == null) {
                     weightEntries
                         .filter { it.getDate().isBefore(weekStart) }
@@ -808,7 +763,7 @@ fun getWeightData(
                 }
             }
         }
-        else -> { // Năm
+        else -> {
             val months = (1..12).map { "T$it" }
             
             months.mapIndexed { index, month ->
@@ -816,7 +771,6 @@ fun getWeightData(
                 val monthStart = LocalDate.of(today.year, monthValue, 1)
                 val monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth())
                 
-                // Tìm mục cân nặng trong tháng này
                 val weightForMonth = weightEntries
                     .filter { 
                         val entryDate = it.getDate()
@@ -827,9 +781,7 @@ fun getWeightData(
                     }
                     .maxByOrNull { it.getDate() }
                 
-                // Nếu không có, tìm mục gần nhất trước đó
                 val fallbackWeight = if (weightForMonth == null && monthValue > 1) {
-                    // Tìm các tháng trước đó
                     weightEntries
                         .filter { 
                             val entryDate = it.getDate()
